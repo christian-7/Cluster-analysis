@@ -35,7 +35,7 @@ fprintf('\n -- Data loaded --\n')
 %% Select Parameters
 
 thresh=500;                                         % loglikelihood threshold
-k=15;                                               % minimum number of neighbors within Eps
+k=20;                                               % minimum number of neighbors within Eps
 Eps=22;                                             % minimum distance between points, nm
 
 fprintf('\n -- Parameters selected --\n')
@@ -110,7 +110,7 @@ numbr=subset(:,3);
 maxk=max(numbr);
 index=1;
 
-for numbr=1:maxk;
+for numbr=2:maxk;
     
     vi=find(subset(:,3)==numbr);
     
