@@ -37,8 +37,8 @@ file = fopen(filename_peaks2);
 line = fgetl(file);
 h = regexp( line, ',', 'split' );
 
-xdim = strmatch('x [nm]',h);
-ydim = strmatch('y [nm]',h);
+x = strmatch('x [nm]',h);
+y = strmatch('y [nm]',h);
 LL = strmatch('loglikelihood',h);
 frame = strmatch('frame',h);
 
@@ -50,9 +50,9 @@ frame = strmatch('frame',h);
 % Set DBSCAN and filtering parameters
 
 thresh=500;                                             % loglikelihood threshold
-k=2;                                                   % minimum number of neighbors within Eps
+k=10;                                                   % minimum number of neighbors within Eps
 Eps=20;                                                 % minimum distance between points, nm
-minLoc=1;                                             % minimum number of locs per cluster
+minLoc=142;                                             % minimum number of locs per cluster
 
 
 
@@ -64,14 +64,14 @@ subsetLL=peaks(filter,1:end);
 
 if figures==1;
 figure
-scatter(subsetLL(:,xdim),subsetLL(:,ydim),1)
+scatter(subsetLL(:,x),subsetLL(:,y),1)
 else
 end
 
 % Create variable for DBSCAN (only X and Y coordinates)
 
-dataDBS(:,1)=subsetLL(:,xdim); % x
-dataDBS(:,2)=subsetLL(:,ydim); % y
+dataDBS(:,1)=subsetLL(:,x); % x
+dataDBS(:,2)=subsetLL(:,y); % y
 
 fprintf('\n -- Data filtered --\n')
 
@@ -100,16 +100,16 @@ if figures==1;
 
 figure('Position',[100 600 1200 400])
 subplot(1,3,1)
-scatter(subsetLL(:,xdim),subsetLL(:,ydim),1);
+scatter(subsetLL(:,x),subsetLL(:,y),1);
 title('Raw Data')
 axis on
-axis([0 max(subsetLL(:,xdim)) 0 max(subsetLL(:,ydim))])
+axis([0 max(subsetLL(:,x)) 0 max(subsetLL(:,y))])
 
 subplot(1,3,2)
 scatter(subset(:,1),subset(:,2),1,mod(subset(:,3),10))
 title('identified Clusters')
 axis on
-axis([0 max(subsetLL(:,xdim)) 0 max(subsetLL(:,ydim))])  
+axis([0 max(subsetLL(:,x)) 0 max(subsetLL(:,y))])  
 
 
 subplot(1,3,3)
@@ -117,7 +117,7 @@ scatter(subset(:,1),subset(:,2),1,(subset(:,4)));
 title('identified Clusters (color -> frame)')
 colorbar
 axis on
-axis([0 max(subsetLL(:,xdim)) 0 max(subsetLL(:,ydim))])  
+axis([0 max(subsetLL(:,x)) 0 max(subsetLL(:,y))])  
 
 
 else 
@@ -141,7 +141,7 @@ for index=1:max(subset(:,3));
     cluster=find(subset(:,3)==index);
     subset(cluster,5)=length(cluster);
     
-    if length(cluster)<minLoc; 
+    if length(cluster)>minLoc; 
         
     subset_filt(cluster,1)=subset(cluster,1);          % x position
     subset_filt(cluster,2)=subset(cluster,2);          % y position

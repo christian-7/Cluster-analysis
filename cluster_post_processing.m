@@ -1,4 +1,41 @@
-%% Load data from txt files
+clear, close all, clc
+
+%% Load Data
+
+% For individual cluster analysis
+
+structure3=[];
+
+a=load('DBSCAN_clusters_A549_EGF_A647_2000mW_10ms__2_MMStack_locResults_DC.mat');
+structure3=cat(1,structure3, a.subset);
+
+b=load('DBSCAN_clusters_A549_EGF_A647_2000mW_10ms__3_MMStack_locResults_DC.mat');
+b.subset(:,3)=b.subset(:,3)+max(a.subset(:,3));
+structure3=cat(1,structure3, b.subset);
+
+c=load('DBSCAN_clusters_A549_EGF_A647_2000mW_10ms__4_MMStack_locResults_DC.mat'); 
+c.subset(:,3)=c.subset(:,3)+max(b.subset(:,3));
+structure3=cat(1,structure3, c.subset);
+
+d=load('DBSCAN_clusters_A549_EGF_A647_2000mW_10ms__1_MMStack_locResults_DC.mat');
+d.subset(:,3)=d.subset(:,3)+max(c.subset(:,3));
+structure3=cat(1,structure3, d.subset);
+
+e=load('DBSCAN_clusters_A549_EGF_A647_2000mW_10ms__6_MMStack_locResults_DC.mat');
+e.subset(:,3)=e.subset(:,3)+max(d.subset(:,3));
+structure3=cat(1,structure3, e.subset);
+
+f=load('DBSCAN_clusters_A549_EGF_A647_2000mW_10ms__9_MMStack_locResults_DC.mat');
+f.subset(:,3)=f.subset(:,3)+max(e.subset(:,3));
+structure3=cat(1,structure3, f.subset);
+
+EGFR_ind=[a;b;c;d;e;f];
+       
+clear index subset
+
+clear a b c d e f 
+
+% For population cluster analysis
 
 % 1 number of cluster
 % 2 area from convex hull
@@ -6,191 +43,71 @@
 % 4 density as mol/area
 % 5 mean diameter
 % 6 stdev diameter
-% 7 radave from HK
-% 8 aspratio from HK
-% 9 clustarea of diamter
+% 7 Mean Mol
 
-MDCK_EGFR=struct('Unchanged', [], 'Starved' , [], 'StarvedGM', []);
-MDCK_EGFR.Unchanged=dlmread('EGFR_unchanged_MDCK.txt');
-MDCK_EGFR.Starved=dlmread('EGFR_starved_MDCK.txt');
-MDCK_EGFR.StarvedGM=dlmread('EGFR_starved_GM_MDCK.txt');
+a=dlmread('DBSCAN_delaunay_HK_A549_EGF_A647_2000mW_10ms__2_MMStack_locResults_DC.txt');
+b=dlmread('DBSCAN_delaunay_HK_A549_EGF_A647_2000mW_10ms__3_MMStack_locResults_DC.txt');
+c=dlmread('DBSCAN_delaunay_HK_A549_EGF_A647_2000mW_10ms__4_MMStack_locResults_DC.txt');
+d=dlmread('DBSCAN_delaunay_HK_A549_EGF_A647_2000mW_10ms__1_MMStack_locResults_DC.txt');
+e=dlmread('DBSCAN_delaunay_HK_A549_EGF_A647_2000mW_10ms__6_MMStack_locResults_DC.txt');
+% f=dlmread('DBSCAN_delaunay_HK_A549_EGF_A647_2000mW_10ms__10_MMStack_locResults_DC.txt');
 
-A549_EGFR=struct('Unchanged', [], 'Starved' , [], 'StarvedGM', []);
-A549_EGFR.Unchanged=dlmread('EGFR_unchanged.txt');
-A549_EGFR.Starved=dlmread('EGFR_starved.txt');
-A549_EGFR.StarvedGM=dlmread('EGFR_ST_GM.txt');
+EGFR=[a;b;c;d;e];
 
-%% Compare Area/Density between conditions
+clear a b c d e 
 
-% MDCK EGFR Area
+%% Population Statistics
 
-bins=0:0.001:0.02;
+figure('Position',[500 400 1000 600])
+h=gcf;
+set(h,'PaperOrientation','landscape');
 
-f=transpose(hist(nonzeros(MDCK_EGFR.Unchanged(:,2)),bins)); 
-f2=transpose(hist(nonzeros(MDCK_EGFR.Starved(:,2)),bins)); 
-f3=transpose(hist(nonzeros(MDCK_EGFR.StarvedGM(:,2)),bins)); 
-f4=[f/sum(f) f2/sum(f2) f3/sum(f3)];
-
-figure('Position',[200 300 800 600])
-set(gcf,'numbertitle','off','name','Compare Area/Density EGFR','PaperOrientation','landscape') % Title of the figure
+binCenters = 0:5:200;
+x=transpose(hist(EGFR(:,5),binCenters)); 
 
 subplot(2,2,1)
-bar(bins,f4,1,'grouped');
-title('Hist of Size MDCK EGFR');
-xlabel('Area (?m^2)');
+bar(binCenters,x/sum(x));hold on;
+axis([0 100 0 0.15]);
+title('Cluster Diameter');
+xlabel('cluster diameter [nm] ');
 ylabel('norm counts');
-axis([-0.001 0.02 0 0.3]);
-leg1=legend('Unchanged','Starved','StarvedGM');
-set(leg1,'FontSize',12);
 
-clear x x2 x3 f f2 f3 f4 bins;
-
-% MDCK EGFR Density
-
-bins=0:5e3:1e5;
-
-f=transpose(hist(nonzeros(MDCK_EGFR.Unchanged(:,4)),bins)); 
-f2=transpose(hist(nonzeros(MDCK_EGFR.Starved(:,4)),bins)); 
-f3=transpose(hist(nonzeros(MDCK_EGFR.StarvedGM(:,4)),bins)); 
-f4=[f/sum(f) f2/sum(f2) f3/sum(f3)];
+binCenters = 0:0.01:0.2;
+x=transpose(hist(EGFR(:,4),binCenters)); 
 
 subplot(2,2,2)
-bar(bins,f4,1,'grouped');
-title('Hist of Density MDCK EGFR');
-xlabel('Density (mol/?m^2)');
+bar(binCenters,x/sum(x));hold on;
+axis([0 0.2 0 0.3]);
+title('Molecule Density');
+xlabel('molecule density [mol/nm^2] ');
 ylabel('norm counts');
-axis([0 1e5 0 0.25])
-leg2=legend('Unchanged','Starved','StarvedGM');
-
-set(leg2,'FontSize',12);
 
 
-% MDCK A549 Area
+binCenters = 0:10:400;
 
-bins=0:0.001:0.02;
-
-f=transpose(hist(nonzeros(A549_EGFR.Unchanged(:,2)),bins)); 
-f2=transpose(hist(nonzeros(A549_EGFR.Starved(:,2)),bins)); 
-f3=transpose(hist(nonzeros(A549_EGFR.StarvedGM(:,2)),bins)); 
-f4=[f/sum(f) f2/sum(f2) f3/sum(f3)];
+x=transpose(hist(EGFR(:,7),binCenters)); 
 
 subplot(2,2,3)
-bar(bins,f4,1,'grouped');
-title('Hist of Size A549 EGFR');
-xlabel('Area (?m^2)');
+bar(binCenters,x/sum(x));hold on;
+axis([0 400 0 0.15]);
+title('Number of Localizations');
+xlabel('# of Localizations');
 ylabel('norm counts');
-axis([-0.001 0.02 0 0.3])
-leg1=legend('Unchanged','Starved','StarvedGM');
-set(leg1,'FontSize',12);
 
-clear x x2 x3 f f2 f3 f4 bins;
 
-% A549 EGFR Density
-
-bins=0:5e3:1e5;
-
-f=transpose(hist(nonzeros(A549_EGFR.Unchanged(:,4)),bins)); 
-f2=transpose(hist(nonzeros(A549_EGFR.Starved(:,4)),bins)); 
-f3=transpose(hist(nonzeros(A549_EGFR.StarvedGM(:,4)),bins)); 
-f4=[f/sum(f) f2/sum(f2) f3/sum(f3)];
+binCenters = 0:500:8000;
+x=transpose(hist(EGFR(:,2),binCenters)); 
 
 subplot(2,2,4)
-bar(bins,f4,1,'grouped');
-
-title('Hist of Density A549 EGFR');
-xlabel('Density (mol/?m^2)');
+bar(binCenters,x/sum(x));hold on;
+axis([0 8000 0 0.3]);
+title('Cluster Area');
+xlabel('cluster area [nm^2] ');
 ylabel('norm counts');
-axis([0 1e5 0 0.25]);
-leg2=legend('Unchanged','Starved','StarvedGM');
-set(leg2,'FontSize',12);
 
-%% 
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Single clusters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% A549 EGFR Molecules per cluster
-
-bins=0:50:500;
-
-f=transpose(hist((A549_EGFR.Unchanged(:,4)).*A549_EGFR.Unchanged(:,2),bins)); 
-f2=transpose(hist((A549_EGFR.Starved(:,4)).*A549_EGFR.Starved(:,2),bins)); 
-f3=transpose(hist((A549_EGFR.StarvedGM(:,4)).*A549_EGFR.StarvedGM(:,2),bins)); 
-f4=[f/sum(f) f2/sum(f2) f3/sum(f3)];
-
-% subplot(2,2,4)
-bar(bins./15,f4,1,'grouped');
-
-title('Molecules per Cluster');
-xlabel('Molecules per cluster');
-ylabel('norm counts');
-axis([0 50 0 0.5]);
-leg2=legend('Unchanged','Starved','StarvedGM');
-set(leg2,'FontSize',12);
-
-%% Compare Area/Density between cells
-
-% Area MDCK vs. A549 
-
-bins=0:0.003:0.1;
-
-f=transpose(hist(nonzeros(MDCK_EGFR.Unchanged(:,5)),bins)); 
-f2=transpose(hist(nonzeros(A549_EGFR.Unchanged(:,5)),bins)); 
-f4=[f/sum(f) f2/sum(f2)];
-
-figure('Position',[200 300 800 300])
-set(gcf,'numbertitle','off','name','Compare A549 MDCK ','PaperOrientation','landscape') % Title of the figure
-
-
-subplot(1,2,1)
-bar(bins,f4,1,'grouped');
-title('Hist of Size MDCK A549');
-xlabel('Diameter, \mum','FontSize',14);
-ylabel('norm counts','FontSize',14);
-axis([0 0.1 0 0.12]);
-leg1=legend('MDCK','A549');
-set(leg1,'FontSize',14);
-set(gca,'FontSize',14);
-box on
-
-clear x x2 x3 f f2 f3 f4 bins;
-
-% Density MDCK vs. A549 
-
-bins=0:3e3:1e5;
-
-f=transpose(hist(nonzeros(MDCK_EGFR.Unchanged(:,4)),bins)); 
-f2=transpose(hist(nonzeros(A549_EGFR.Unchanged(:,4)),bins)); 
-f4=[f/sum(f) f2/sum(f2)];
-
-subplot(1,2,2)
-bar(bins,f4,1,'grouped');
-title('Hist of Density MDCK A549');
-xlabel('Cluster density (mol/\mum^2)','FontSize',14);
-ylabel('norm counts','FontSize',14);
-axis([0 1e5 0 0.2])
-leg2=legend('MDCK','A549');
-set(leg2,'FontSize',12);
-set(gca,'FontSize',14);
-box on
-
-%% 
-
-scatter(MDCK_EGFR.Unchanged(:,2),MDCK_EGFR.Unchanged(:,4),1);hold on;
-scatter(A549_EGFR.Unchanged(:,2),A549_EGFR.Unchanged(:,4),1,'red');
-
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Load single clusters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%  structure3=[0 0 0];
- 
-subset(:,3)=subset(:,3)+max(structure3(:,3));
-structure3=cat(1,structure3, subset);        
-
-clear index subset
-
-%% 
-
-%% NN search for individual clusters
+% NN search for individual clusters
 
 NoN={};
 Gradient={};
@@ -198,7 +115,7 @@ Gradient={};
 tic
 
 
- for    index=1:1:max(structure3(:,3));
+ for    index=1:100 % max(structure3(:,3));
 
         vx=find(structure3(:,3) == index);
         cluster=structure3(vx,1);
@@ -206,17 +123,16 @@ tic
         
                 if length(vx)>50; %& length(vx)< 100000 ;                              % only cluster with more than n points
                     
-                idx = rangesearch(cluster,cluster,0.03);
+                idx = rangesearch(cluster,cluster,30);
         
                         for i=1:1:length(idx);
                         NoN{index,1}(i,1)=length(idx{i,1});     % count the total number of neighbors for each point in dataset
                         end
          
                 scatter(cluster(:,1),cluster(:,2),2,NoN{index,1});hold on;
-                axis([0 12 0 12]);
+%                 axis([0 12 0 12]);
                 colorbar
                 colormap(jet)
-%                 axis([4.2 5.8 4.3 5.9]);
                 
                 Gradient{index,3}=max(NoN{index,1})/min(NoN{index,1});  % fold increase
                 Gradient{index,2}=max(NoN{index,1});                    % max NN
@@ -231,105 +147,62 @@ tic
 end
 toc
 
-%% Plot specific cluster
+%% Plot density histogram of one specific cluster
 
-clusNbr=1759;
+clusNbr=10;
+cluster=[];
+NoNind=[];
 
         vx=find(structure3(:,3) == clusNbr);
         cluster=structure3(vx,1);
         cluster(:,2)=structure3(vx,2);
         
-        idx = rangesearch(cluster,cluster,0.03);
+        idx = rangesearch(cluster,cluster,30);
         
-for i=1:1:length(idx);
+for i=1:length(idx);
 NoNind(i,1)=length(idx{i,1});     % count the total number of neighbors for each point in dataset
 end
 
 figure
-%  scatter(cluster(:,1),cluster(:,2),2,NoNind);hold on;
- scatter3(cluster(:,1),cluster(:,2),NoNind,3,NoNind);hold on;
-% axis([min(cluster(:,1)) max(cluster(:,1)) min(cluster(:,2)) max(cluster(:,2))]);
-% axis([0 12 0 10]);
+scatter3(cluster(:,1),cluster(:,2),NoNind,3,NoNind);hold on;
 colorbar
 colormap(jet)
-                
-   
-% clear NoNind
+
 
 %% Plot histogram of ratio between min/max --> fold increase of density
 
-binCenters = 0:5:200;
-
-% x=transpose(hist(cell2mat(Gradient_unchanged(:,end)),binCenters)); 
-% x2=transpose(hist(cell2mat(Gradient_starved(:,end)),binCenters)); 
-% x3=transpose(hist(cell2mat(Gradient_starved_GM(:,end)),binCenters)); 
-
-x=transpose(hist(cell2mat(Gradient_unchanged_A549(:,end)),binCenters)); 
-x2=transpose(hist(cell2mat(Gradient_starved_A549(:,end)),binCenters)); 
-x3=transpose(hist(cell2mat(Gradient_starved_GM_A549(:,end)),binCenters));
-
-x4=[x/sum(x) x2/sum(x2) x3/sum(x3)];
-
-% subplot(1,2,2)
-bar(binCenters,x4);hold on;
-% bar(x2,f2/sum(f2), 0.3);
-axis([0 100 0 0.3]);
-title('Internal density gradient EGFR A549');
-xlabel('density ratio (min/max) ');
-ylabel('norm counts');
-leg2=legend('unchanged','starved', 'starved GM');
-set(leg2,'FontSize',12);
-
-MedianUnchanged=median(x)
-MeanUnchanged=mean(x)
-MedianStarved=median(x2)
-MeanStarved=mean(x2)
-MedianStarvedGM=median(x3)
-MeanStarvedGM=mean(x3)
-
-%% 
-
-bins=0:400:10000;
-
-f=transpose(hist(MDCK_EGFR.Unchanged(MDCK_EGFR.Unchanged(:,2)<0.01,2)*10^6,bins));
-f2=transpose(hist(A549_EGFR.Unchanged(A549_EGFR.Unchanged(:,2)<0.01,2)*10^6,bins)); 
-f4=[f/sum(f) f2/sum(f2)];
+binCenters = 0:3:50;
+x=transpose(hist(cell2mat(Gradient(:,end)),binCenters)); 
 
 figure('Position',[200 300 800 400])
-set(gcf,'numbertitle','off','name','Compare A549 MDCK ','PaperOrientation','landscape') % Title of the figure
+set(gcf,'numbertitle','off','name','Internal Density Gradient','PaperOrientation','landscape') % Title of the figure
 
-subplot(1,2,1)
-bar(bins,f4,1,'grouped');
-% title('Hist of Size MDCK A549');
-xlabel('Area, nm^2','FontSize',14);
-ylabel('norm counts','FontSize',14);
-axis([0 10000 0 0.2]);
-leg1=legend('MDCK','A549');
-set(leg1,'FontSize',14);
-set(gca,'FontSize',14);
-box on
+bar(binCenters,x/sum(x));hold on;
+axis([-10 50 0 0.6]);
+title('Internal density gradient EGFR');
+xlabel('density ratio (min/max) ');
+ylabel('norm counts');
 
-bins=0:5:100;
+Median=median(x)
+Mean=mean(x)
 
-f=transpose(hist(MDCK_EGFR.Unchanged(MDCK_EGFR.Unchanged(:,5)<0.5,5)*1e3,bins));
-f2=transpose(hist(A549_EGFR.Unchanged(A549_EGFR.Unchanged(:,5)<0.5,5)*1e3,bins)); 
-f4=[f/sum(f) f2/sum(f2)];
+%% Plot clusters with color according to frame
 
-% 
-% figure('Position',[200 300 400 400])
-% set(gcf,'numbertitle','off','name','Compare A549 MDCK ','PaperOrientation','landscape') % Title of the figure
+figure
 
-subplot(1,2,2)
+for    index=1:20 % max(structure3(:,3));
 
-bar(bins,f4,1,'grouped');
-% title('Hist of Size MDCK A549');
-xlabel('Radius, nm','FontSize',14);
-ylabel('norm counts','FontSize',14);
-axis([0 100 0 0.25]);
-leg1=legend('MDCK','A549');
-set(leg1,'FontSize',14);
-set(gca,'FontSize',14);
-box on
-
-
-
+        vx=find(structure3(:,3) == index);
+        cluster=structure3(vx,1);
+        cluster(:,2)=structure3(vx,2);
+        cluster(:,3)=structure3(vx,4);
+        
+        scatter(cluster(:,1),cluster(:,2),1,(cluster(:,3))); hold on;
+        title('identified Clusters (color -> frame)')
+        colorbar
+        axis on
+%         axis([0 max(cluster(:,1)) 0 max(cluster(:,2))])  
+        
+        clear cluster
+                    
+end
